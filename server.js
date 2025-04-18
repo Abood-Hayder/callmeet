@@ -1,28 +1,31 @@
 const express = require('express');
 const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
-
 const app = express();
-const PORT = 3000;
 
-// بياناتك من Agora
-const APP_ID = '8167f43b448646bab9be53e2944cedc0';
-const APP_CERTIFICATE = '4b7ab20fa6b3401889213e919cbe6d4f';
+require('dotenv').config();
 
-app.get('/rtc-token', (req, res) => {
+const PORT = process.env.PORT || 3000;
+
+// للإرسال من التطبيق
+app.get('/token', (req, res) => {
+  const appId = process.env.APP_ID;
+  const appCertificate = process.env.APP_CERTIFICATE;
+
   const channelName = req.query.channelName;
   if (!channelName) {
-    return res.status(400).json({ error: 'يجب تحديد اسم القناة' });
+    return res.status(400).json({ error: 'channelName is required' });
   }
 
-  const uid = req.query.uid || 0; // 0 يعني UID عشوائي
+  const uid = req.query.uid ? parseInt(req.query.uid) : 0;
   const role = RtcRole.PUBLISHER;
-  const expireTimeInSeconds = 3600;
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-  const privilegeExpireTime = currentTimestamp + expireTimeInSeconds;
+
+  const expireTime = 3600; // ساعة
+  const currentTime = Math.floor(Date.now() / 1000);
+  const privilegeExpireTime = currentTime + expireTime;
 
   const token = RtcTokenBuilder.buildTokenWithUid(
-    APP_ID,
-    APP_CERTIFICATE,
+    appId,
+    appCertificate,
     channelName,
     uid,
     role,
@@ -32,6 +35,7 @@ app.get('/rtc-token', (req, res) => {
   return res.json({ token });
 });
 
+// لازم البورت يكون مفتوح
 app.listen(PORT, () => {
-  console.log(`✅ سيرفر التوكن شغال على http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
